@@ -1,0 +1,22 @@
+name: Continuous Delivery - HML
+on:
+    push:
+        branches:
+            - staging
+jobs:
+    job_1:
+        name: Deployment to HML
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@master
+            - uses: actions/setup-node@v1
+              with:
+                  node-version: 10.x
+            - name: Install SFDX-CLI
+              run: npm install sfdx-cli
+            - name: Authorize HML Sandbox
+              run: node_modules/sfdx-cli/bin/run force:auth:jwt:grant --clientid ${{ secrets.HML_CONSUMER_KEY }} --username ${{ secrets.USERNAME }} --jwtkeyfile .github/workflows/assets/server.key --instanceurl https://test.salesforce.com
+            - name: Define default user name
+              run: node_modules/sfdx-cli/bin/run force:config:set defaultusername=${{ secrets.USERNAME }}
+            - name: Run deployment to HML
+              run: node_modules/sfdx-cli/bin/run force:source:deploy -x manifest/package.xml -l RunLocalTests --verbose
